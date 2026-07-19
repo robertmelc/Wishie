@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wishie — appka (testovací režim)</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #140F26; --surface: #1E1832; --surface-2: rgba(255,255,255,0.05);
+    --text: #FAF7F2; --text-dim: #948FB0; --line: rgba(255,255,255,0.1);
+    --twilight: #5C3DF5; --aurora: #7A63F8; --ember: #FF7A59; --ember-2: #FF9E6B;
+    --ok: #59D68F;
+  }
+  body.light {
+    --bg: #FAF7F2; --surface: #FFFFFF; --surface-2: #F4F1EA;
+    --text: #1C1730; --text-dim: #756F92; --line: rgba(28,23,48,0.1);
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:'Manrope',sans-serif; min-height:100vh; }
+  .display { font-family:'Fraunces', Georgia, serif; }
+  button, input, textarea { font-family:'Manrope',sans-serif; }
+
+  .topbar { display:flex; align-items:center; justify-content:space-between; padding:16px 26px; border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--bg); z-index:30; }
+  .topbar .brand { display:flex; align-items:center; gap:9px; font-family:'Fraunces',serif; font-weight:600; font-size:18px; }
+  .topbar .brand svg { width:26px; height:26px; }
+  .topbar .right { display:flex; align-items:center; gap:14px; }
+  .topbar a.back { font-size:13px; color:var(--text-dim); text-decoration:none; }
+  .topbar a.back:hover { color:var(--text); }
+  .ghostbtn { font-size:12px; color:var(--text-dim); border:1px solid var(--line); border-radius:20px; padding:7px 14px; cursor:pointer; background:none; }
+  .ghostbtn:hover { color:var(--text); border-color:var(--ember); }
+  .toggle { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-dim); border:1px solid var(--line); border-radius:20px; padding:6px 6px 6px 14px; cursor:pointer; }
+  .toggle .knob { width:34px; height:20px; border-radius:12px; background:var(--surface-2); position:relative; border:1px solid var(--line); }
+  .toggle .knob::after { content:""; position:absolute; width:14px; height:14px; border-radius:50%; background:linear-gradient(120deg,var(--twilight),var(--ember)); top:2px; left:2px; transition:left .2s; }
+  body.light .toggle .knob::after { left:17px; }
+
+  .banner { max-width:900px; margin:18px auto 0; padding:11px 18px; border-radius:14px; background:linear-gradient(120deg, rgba(92,61,245,0.16), rgba(255,122,89,0.13)); border:1px solid rgba(255,122,89,0.28); font-size:12.5px; color:var(--text-dim); text-align:center; }
+  .banner b { color:var(--ember-2); }
+
+  main.viewer { display:flex; flex-direction:column; align-items:center; padding:30px 24px 100px; }
+  .phone { width:360px; min-height:720px; border-radius:42px; background:var(--surface); border:1px solid var(--line); box-shadow:0 40px 80px -30px rgba(0,0,0,0.5); padding:22px 20px; display:flex; flex-direction:column; gap:12px; position:relative; overflow:hidden; }
+  .phone::before { content:""; position:absolute; width:260px; height:260px; border-radius:50%; background:radial-gradient(circle, rgba(255,122,89,0.16), transparent 70%); top:-100px; right:-70px; pointer-events:none; }
+  .notch { width:54px; height:5px; border-radius:3px; background:var(--line); margin:0 auto 4px; }
+
+  .s-label { font-size:11.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-dim); }
+  .headline { font-family:'Fraunces',serif; font-size:22px; font-weight:600; line-height:1.2; }
+  .subtext { font-size:13px; color:var(--text-dim); line-height:1.5; }
+  .card { background:var(--surface-2); border:1px solid var(--line); border-radius:16px; padding:12px 14px; font-size:12.5px; }
+  .thumb { border-radius:14px; background:linear-gradient(135deg, rgba(122,99,248,0.4), rgba(255,122,89,0.35)); display:flex; align-items:center; justify-content:center; font-size:11px; color:white; text-align:center; padding:8px; }
+  .btn { border-radius:30px; text-align:center; font-size:13px; font-weight:700; padding:13px 10px; cursor:pointer; border:none; width:100%; }
+  .btn.primary { background:linear-gradient(120deg,var(--twilight),var(--ember)); color:white; }
+  .btn.ghost { border:1.4px solid var(--line); color:var(--text); background:none; }
+  .btn.small { padding:9px 10px; font-size:11.5px; }
+  .btn:disabled { opacity:0.4; cursor:not-allowed; }
+  .row { display:flex; gap:9px; }
+  .row > * { flex:1; }
+  .tag { font-size:10.5px; padding:6px 12px; border-radius:10px; border:1px solid var(--line); color:var(--text-dim); cursor:pointer; background:none; }
+  .tag.on { background:linear-gradient(120deg,var(--twilight),var(--ember)); color:white; border:none; }
+  .avatar { width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,var(--aurora),var(--ember)); flex-shrink:0; }
+  .top-row { display:flex; align-items:center; justify-content:space-between; }
+  .top-row .brand-mini { display:flex; align-items:center; gap:7px; font-weight:700; font-size:14px; font-family:'Fraunces',serif; }
+  .top-row .brand-mini svg { width:22px; height:22px; }
+  input[type=text], input[type=tel], input[type=email], textarea {
+    width:100%; background:var(--surface-2); border:1px solid var(--line); border-radius:14px; color:var(--text);
+    padding:11px 13px; font-size:13px; resize:none;
+  }
+  input::placeholder, textarea::placeholder { color:var(--text-dim); }
+  .field-label { font-size:11px; color:var(--text-dim); margin-bottom:5px; display:block; }
+  .checkline { display:flex; gap:9px; align-items:flex-start; font-size:11.5px; color:var(--text-dim); cursor:pointer; }
+  .checkline input { width:16px; height:16px; margin-top:1px; accent-color: var(--ember); }
+
+  .steps-ind { display:flex; gap:6px; margin-bottom:2px; }
+  .steps-ind div { height:3px; flex:1; border-radius:2px; background:var(--surface-2); }
+  .steps-ind div.done { background:linear-gradient(120deg,var(--twilight),var(--ember)); }
+
+  .list-row { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); }
+  .list-row:last-child { border-bottom:none; }
+  .list-row .meta { flex:1; }
+  .list-row .meta .t { font-size:12.5px; font-weight:700; }
+  .list-row .meta .s { font-size:10.5px; color:var(--text-dim); }
+  .badge { font-size:9.5px; padding:3px 9px; border-radius:8px; background:var(--surface-2); color:var(--text-dim); }
+  .badge.ok { background:rgba(89,214,143,0.18); color:var(--ok); }
+  .badge.win { background:linear-gradient(120deg,var(--twilight),var(--ember)); color:white; }
+
+  .tabbar { margin-top:auto; display:flex; justify-content:space-around; padding-top:12px; border-top:1px solid var(--line); }
+  .tabbtn { display:flex; flex-direction:column; align-items:center; gap:3px; font-size:9.5px; color:var(--text-dim); background:none; border:none; cursor:pointer; padding:4px; }
+  .tabbtn .ic { width:18px; height:18px; border-radius:6px; background:var(--surface-2); }
+  .tabbtn.active { color:var(--text); }
+  .tabbtn.active .ic { background:linear-gradient(120deg,var(--twilight),var(--ember)); }
+
+  .scroll-body { overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:12px; padding-right:2px; }
+  .scroll-body::-webkit-scrollbar { width:4px; }
+  .scroll-body::-webkit-scrollbar-thumb { background:var(--line); border-radius:4px; }
+
+  .timeline-step { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .timeline-step:last-child { margin-bottom:0; }
+  .dotstep { width:11px; height:11px; border-radius:50%; border:1.4px solid var(--line); flex-shrink:0; }
+  .dotstep.done { background:var(--ember); border-color:var(--ember); }
+  .dotstep.active { background:var(--twilight); border-color:var(--twilight); }
+  .timeline-step .tl-label { font-size:12px; flex:1; }
+  .timeline-step.dim .tl-label { color:var(--text-dim); }
+
+  .empty { text-align:center; padding:30px 10px; color:var(--text-dim); font-size:12.5px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="tg" x1="8" y1="20" x2="92" y2="80" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#7A63F8"/><stop offset="1" stop-color="#FF8A66"/></linearGradient></defs><path d="M10,50 C10,36 27,22 50,50 C27,78 10,64 10,50 Z" fill="url(#tg)"/><path d="M90,50 C90,36 73,22 50,50 C73,78 90,64 90,50 Z" fill="url(#tg)"/><circle cx="50" cy="50" r="7.5" fill="#FAF7F2"/></svg>
+    Wishie — appka
+  </div>
+  <div class="right">
+    <button class="ghostbtn" id="resetBtn">Restartovat data</button>
+    <a class="back" href="index.html">← zpět na web</a>
+    <div class="toggle" id="themeToggle"><span id="themeLabel">Tmavý</span><div class="knob"></div></div>
+  </div>
+</div>
+
+<div class="banner"><b>Testovací režim</b> — DMS, QR platba, platební brána i vouchery jsou zde simulované. Nic se neúčtuje, data zůstávají jen v tomto prohlížeči.</div>
+
+<main class="viewer">
+  <div class="phone" id="phone"></div>
+</main>
+
+<script>
+/* ---------- seed data ---------- */
+const PERSONALITIES = [
+  { id:'p1', name:'Jan Novák', category:'Herci', price:2900, delivery:4, project:'dětská onkologie', motto:'„Pomoc se počítá i v malém.“' },
+  { id:'p2', name:'Karolína Dvořák', category:'Sport', price:3400, delivery:5, project:'sportovní kluby pro děti z dětských domovů', motto:'„Každý start má smysl.“' },
+  { id:'p3', name:'Matěj Kříž', category:'Hudba', price:1800, delivery:3, project:'hospicová péče', motto:'„Hudba doprovází i v těžkých chvílích.“' },
+  { id:'p4', name:'Bára Veselá', category:'Herci', price:2400, delivery:6, project:'podpora pěstounských rodin', motto:'„Radost se má sdílet.“' },
+  { id:'p5', name:'Tomáš Holub', category:'Sport', price:2100, delivery:4, project:'dětská onkologie', motto:'„Nikdy to nevzdávej.“' },
+  { id:'p6', name:'Eliška Malá', category:'Hudba', price:3100, delivery:5, project:'hospicová péče', motto:'„Jedna píseň, jedna naděje.“' },
+];
+const OCCASIONS = [
+  {v:'narozeniny', l:'Narozeniny', i:'🎂'}, {v:'svatek', l:'Svátek', i:'🎈'},
+  {v:'svatba', l:'Svatba', i:'💍'}, {v:'promoce', l:'Promoce', i:'🎓'},
+  {v:'kondolence', l:'Kondolence', i:'🕊️'}, {v:'vanoce', l:'Vánoce', i:'🎄'},
+];
+
+/* ---------- state ---------- */
+const STORE_KEY = 'wishie_demo_state_v1';
+function defaultState() {
+  return {
+    wishes: [], orders: [], vouchers: [],
+    corporate: { condition: 'Nákup nad 1 500 Kč' },
+    draw: { entries: [], winners: [] },
+  };
+}
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (!raw) return defaultState();
+    return Object.assign(defaultState(), JSON.parse(raw));
+  } catch(e) { return defaultState(); }
+}
+function saveState() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+let state = loadState();
+let nav = { screen: 'home', params: {} };
+let draft = {};
+
+function navigateTo(screen, params) { nav = { screen: screen, params: params || {} }; render(); window.scrollTo({top:0}); }
+function uid() { return Math.random().toString(36).slice(2,9); }
+function money(n) { return n.toLocaleString('cs-CZ') + ' Kč'; }
+
+/* ---------- shared chrome ---------- */
+const BOW = `<svg viewBox="0 0 100 100" style="width:100%;height:100%;"><defs><linearGradient id="bowg" x1="8" y1="20" x2="92" y2="80" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#7A63F8"/><stop offset="1" stop-color="#FF8A66"/></linearGradient></defs><path d="M10,50 C10,36 27,22 50,50 C27,78 10,64 10,50 Z" fill="url(#bowg)"/><path d="M90,50 C90,36 73,22 50,50 C73,78 90,64 90,50 Z" fill="url(#bowg)"/><circle cx="50" cy="50" r="7.5" fill="#FAF7F2"/></svg>`;
+function topRow(title) {
+  return `<div class="top-row"><div class="brand-mini"><span style="width:20px;height:20px;display:inline-block;">${BOW}</span>${title||'Wishie'}</div><div style="width:28px;height:28px;border-radius:50%;border:1px solid var(--line); display:flex;align-items:center;justify-content:center;font-size:12px;">☰</div></div>`;
+}
+function tabbar(active) {
+  const items = [
+    {k:'home', label:'Domů'}, {k:'mine', label:'Přání'}, {k:'catalog', label:'Osobnosti'}, {k:'hall', label:'Síň'}
+  ];
+  return `<div class="tabbar">${items.map(it => `<button class="tabbtn ${active===it.k?'active':''}" onclick="navigateTo('${it.k}')"><span class="ic"></span>${it.label}</button>`).join('')}</div>`;
+}
+function steps(n, total) {
+  let html = '<div class="steps-ind">';
+  for (let i=0;i<total;i++) html += `<div class="${i<n?'done':''}"></div>`;
+  html += '</div>';
+  return html;
+}
+
+/* ---------- screens ---------- */
+function screenHome() {
+  const count = state.wishes.length;
+  return `
+    ${topRow()}
+    <div class="scroll-body">
+      <div class="s-label">Vítej zpět</div>
+      <div class="headline">Komu dnes uděláš radost?</div>
+      <button class="btn primary" onclick="navigateTo('occasion')">Přání pro každého</button>
+      <button class="btn ghost" onclick="navigateTo('catalog')">Přání od osobností</button>
+      <div class="card"><div class="s-label">Odesláno v tomto testovacím kole</div>
+        <div class="row" style="margin-top:8px; align-items:center;"><div class="headline" style="font-size:24px;">${count}</div><div style="font-size:11px; color:var(--text-dim); text-align:right; flex:2;">${count===1?'přání':'přání celkem'}</div></div>
+      </div>
+      <div class="card" style="font-size:11px; color:var(--text-dim);">Jsi firemní partner? <a href="#" onclick="navigateTo('corporate'); return false;" style="color:var(--ember-2); font-weight:700; text-decoration:none;">Otevřít portál →</a></div>
+    </div>
+    ${tabbar('home')}
+  `;
+}
+
+function screenOccasion() {
+  return `
+    ${steps(1,4)}
+    <div class="s-label">Krok 1 ze 4</div>
+    <div class="headline">Jaká je příležitost?</div>
+    <div class="scroll-body" style="display:grid; grid-template-columns:1fr 1fr; gap:9px;">
+      ${OCCASIONS.map(o => `<div class="card" style="text-align:center; cursor:pointer;" onclick="draft.occasion='${o.v}'; draft.occasionLabel='${o.l}'; navigateTo('create')">${o.i}<br>${o.l}</div>`).join('')}
+    </div>
+    <button class="btn ghost" onclick="navigateTo('home')">Zpět</button>
+  `;
+}
+
+function screenCreate() {
+  draft.type = draft.type || 'card';
+  return `
+    ${steps(2,4)}
+    <div class="s-label">Krok 2 ze 4 · ${draft.occasionLabel||''}</div>
+    <div class="headline">Vytvoř přání</div>
+    <div class="thumb" style="height:130px;">náhled: „${(draft.message||'Vaše zpráva se objeví tady…').slice(0,60)}“</div>
+    <div class="row">
+      <button class="tag ${draft.type==='card'?'on':''}" onclick="draft.type='card'; render()">Šablona</button>
+      <button class="tag ${draft.type==='video'?'on':''}" onclick="draft.type='video'; render()">Video</button>
+      <button class="tag ${draft.type==='voice'?'on':''}" onclick="draft.type='voice'; render()">Hlas</button>
+    </div>
+    <textarea rows="3" placeholder="Napiš pár slov…" oninput="draft.message=this.value">${draft.message||''}</textarea>
+    <button class="btn primary" ${!draft.occasion?'disabled':''} onclick="navigateTo('recipient')">Pokračovat</button>
+    <button class="btn ghost" onclick="navigateTo('occasion')">Zpět</button>
+  `;
+}
+
+function screenRecipient() {
+  draft.method = draft.method || 'qr';
+  const voucherOk = draft.method !== 'voucher' || (draft.voucherCode && state.vouchers.find(v=>v.code===draft.voucherCode && v.status==='issued'));
+  return `
+    ${steps(3,4)}
+    <div class="s-label">Krok 3 ze 4</div>
+    <div class="headline">Komu ho pošleš?</div>
+    <input type="text" placeholder="Jméno příjemce" value="${draft.recipientName||''}" oninput="draft.recipientName=this.value">
+    <input type="text" placeholder="Telefon nebo e-mail" value="${draft.recipientContact||''}" oninput="draft.recipientContact=this.value">
+    <div class="s-label">Způsob úhrady (testovací)</div>
+    <div class="row">
+      <button class="tag ${draft.method==='qr'?'on':''}" onclick="draft.method='qr'; render()">QR</button>
+      <button class="tag ${draft.method==='dms'?'on':''}" onclick="draft.method='dms'; render()">DMS</button>
+      <button class="tag ${draft.method==='gateway'?'on':''}" onclick="draft.method='gateway'; render()">Brána</button>
+      <button class="tag ${draft.method==='voucher'?'on':''}" onclick="draft.method='voucher'; render()">Voucher</button>
+    </div>
+    ${draft.method==='voucher' ? `<input type="text" placeholder="Kód voucheru" value="${draft.voucherCode||''}" oninput="draft.voucherCode=this.value.toUpperCase(); render()">
+      ${draft.voucherCode ? (voucherOk ? `<div style="font-size:11px;color:var(--ok);">✓ Voucher platný</div>` : `<div style="font-size:11px;color:var(--ember-2);">Kód nenalezen nebo už byl uplatněn</div>`) : ''}` : `<div class="card" style="font-size:10.5px; color:var(--text-dim);">Simulace platby — v testovacím režimu se nic neúčtuje.</div>`}
+    <label class="checkline"><input type="checkbox" id="consentBox" ${draft.consent?'checked':''} onchange="draft.consent=this.checked; render()"> Souhlasím s podmínkami a zapojením do soutěže</label>
+    <button class="btn primary" ${(!draft.consent || !draft.recipientName || !voucherOk)?'disabled':''} onclick="submitWish()">Odeslat přání</button>
+    <button class="btn ghost" onclick="navigateTo('create')">Zpět</button>
+  `;
+}
+
+function submitWish() {
+  const id = uid();
+  const wish = {
+    id, occasion: draft.occasionLabel, type: draft.type, message: draft.message||'',
+    recipientName: draft.recipientName, recipientContact: draft.recipientContact,
+    method: draft.method, status: 'odesláno', createdAt: Date.now(), recipientConsent: false,
+  };
+  state.wishes.unshift(wish);
+  state.draw.entries.push({ id: uid(), wishId: id, role: 'sender', name: 'Ty' });
+  state.draw.entries.push({ id: uid(), wishId: id, role: 'recipient', name: draft.recipientName });
+  if (draft.method === 'voucher' && draft.voucherCode) {
+    const v = state.vouchers.find(v=>v.code===draft.voucherCode);
+    if (v) v.status = 'redeemed';
+  }
+  saveState();
+  draft = {};
+  navigateTo('confirm', { wishId: id });
+}
+
+function screenConfirm() {
+  const wish = state.wishes.find(w=>w.id===nav.params.wishId);
+  if (!wish) return screenEmptyRedirect('home');
+  return `
+    ${steps(4,4)}
+    <div class="thumb" style="height:110px; margin-top:6px;">✓</div>
+    <div class="headline" style="text-align:center;">Přání je na cestě</div>
+    <div class="card" style="text-align:center; color:var(--text-dim);">Ty i ${wish.recipientName} jste zapojeni do týdenního losování</div>
+    <button class="btn ghost" onclick="navigateTo('recipient-view', {wishId:'${wish.id}'})">Zobrazit jako příjemce</button>
+    <button class="btn primary" onclick="navigateTo('mine')">Moje přání</button>
+  `;
+}
+
+function screenRecipientView() {
+  const wish = state.wishes.find(w=>w.id===nav.params.wishId);
+  if (!wish) return screenEmptyRedirect('mine');
+  return `
+    <div class="s-label" style="text-align:center;">Přání pro ${wish.recipientName}</div>
+    <div class="thumb" style="height:170px;">🎉 „${wish.message || 'Vše nejlepší!'}“</div>
+    <label class="checkline"><input type="checkbox" ${wish.recipientConsent?'checked':''} onchange="toggleRecipientConsent('${wish.id}', this.checked)"> Chci se zapojit do losování o výhru</label>
+    <button class="btn primary" onclick="navigateTo('mine')">Potvrdit a zpět na Moje přání</button>
+  `;
+}
+function toggleRecipientConsent(wishId, val) {
+  const wish = state.wishes.find(w=>w.id===wishId);
+  wish.recipientConsent = val;
+  const entry = state.draw.entries.find(e=>e.wishId===wishId && e.role==='recipient');
+  if (entry) entry.consented = val;
+  saveState();
+}
+
+function screenMine() {
+  const hasWishes = state.wishes.length > 0;
+  const lastWinner = state.draw.winners[state.draw.winners.length-1];
+  return `
+    ${topRow()}
+    <div class="headline">Moje přání</div>
+    <div class="scroll-body">
+      ${!hasWishes ? `<div class="empty">Zatím jsi neodeslal žádné přání.<br><button class="btn primary small" style="margin-top:12px;" onclick="navigateTo('occasion')">Odeslat první přání</button></div>` : state.wishes.map(w => `
+        <div class="list-row">
+          <div class="avatar"></div>
+          <div class="meta"><div class="t">${w.recipientName} · ${w.occasion}</div><div class="s">${w.status}${w.recipientConsent?' · příjemce potvrdil':''}</div></div>
+          ${lastWinner && (lastWinner.wishId===w.id) ? `<span class="badge win">Výhra! 🎉</span>` : `<span class="badge ok">${w.method}</span>`}
+        </div>
+      `).join('')}
+      ${hasWishes ? `<button class="btn ghost" onclick="runDraw()">Vylosovat výherce týdne (demo)</button>` : ''}
+      ${lastWinner ? `<div class="card" style="text-align:center;">🎉 Vylosován/a: <b>${lastWinner.name}</b></div>` : ''}
+    </div>
+    ${tabbar('mine')}
+  `;
+}
+function runDraw() {
+  if (state.draw.entries.length === 0) return;
+  const consented = state.draw.entries.filter(e => e.role==='sender' || e.consented);
+  const pool = consented.length ? consented : state.draw.entries;
+  const winner = pool[Math.floor(Math.random()*pool.length)];
+  state.draw.winners.push(winner);
+  saveState();
+  render();
+}
+
+function screenCatalog() {
+  draft.filter = draft.filter || 'Vše';
+  const cats = ['Vše'].concat(PERSONALITIES.map(p=>p.category).filter(function(c, i, arr) { return arr.indexOf(c) === i; }));
+  const list = draft.filter==='Vše' ? PERSONALITIES : PERSONALITIES.filter(p=>p.category===draft.filter);
+  return `
+    ${topRow()}
+    <div class="headline">Vyber osobnost</div>
+    <div class="row" style="flex-wrap:wrap;">${cats.map(c=>`<button class="tag ${draft.filter===c?'on':''}" onclick="draft.filter='${c}'; render()">${c}</button>`).join('')}</div>
+    <div class="scroll-body" style="display:grid; grid-template-columns:1fr 1fr; gap:9px;">
+      ${list.map(p => `<div class="thumb" style="height:100px; cursor:pointer; flex-direction:column;" onclick="navigateTo('personality-detail',{id:'${p.id}'})">${p.name}<br>${money(p.price)}</div>`).join('')}
+    </div>
+    ${tabbar('catalog')}
+  `;
+}
+
+function screenPersonalityDetail() {
+  const p = PERSONALITIES.find(x=>x.id===nav.params.id);
+  if (!p) return screenEmptyRedirect('catalog');
+  return `
+    <div class="thumb" style="height:170px;">portrét — ${p.name}</div>
+    <div class="headline" style="font-size:19px;">${p.name}</div>
+    <div class="s-label">${p.category} · podporuje ${p.project}</div>
+    <div class="card" style="text-align:center; color:var(--text-dim);">${p.motto}</div>
+    <button class="btn primary" onclick="navigateTo('order-form',{id:'${p.id}'})">Objednat · ${money(p.price)}</button>
+    <button class="btn ghost" onclick="navigateTo('catalog')">Zpět do katalogu</button>
+  `;
+}
+
+function screenOrderForm() {
+  const p = PERSONALITIES.find(x=>x.id===nav.params.id);
+  if (!p) return screenEmptyRedirect('catalog');
+  draft.length = draft.length || 60;
+  return `
+    <div class="headline">Zadej detaily</div>
+    <div class="s-label">${p.name} · ${money(p.price)}</div>
+    <input type="text" placeholder="Komu je přání určeno" value="${draft.orderRecipient||''}" oninput="draft.orderRecipient=this.value">
+    <input type="text" placeholder="Příležitost" value="${draft.orderOccasion||''}" oninput="draft.orderOccasion=this.value">
+    <textarea rows="2" placeholder="Pár slov o obdarovaném…" oninput="draft.orderInfo=this.value">${draft.orderInfo||''}</textarea>
+    <div class="row"><button class="tag ${draft.length===30?'on':''}" onclick="draft.length=30; render()">30s</button><button class="tag ${draft.length===60?'on':''}" onclick="draft.length=60; render()">60s</button><button class="tag ${draft.length===90?'on':''}" onclick="draft.length=90; render()">90s</button></div>
+    <button class="btn primary" ${!draft.orderRecipient?'disabled':''} onclick="submitOrder('${p.id}')">Zaplatit a objednat (testovací režim)</button>
+    <button class="btn ghost" onclick="navigateTo('personality-detail',{id:'${p.id}'})">Zpět</button>
+  `;
+}
+function submitOrder(personalityId) {
+  const id = uid();
+  state.orders.unshift({
+    id, personalityId, recipientName: draft.orderRecipient, occasion: draft.orderOccasion,
+    info: draft.orderInfo||'', length: draft.length, status: 'pending', createdAt: Date.now(),
+  });
+  saveState();
+  draft = {};
+  navigateTo('order-status', { orderId: id });
+}
+
+function screenOrderStatus() {
+  const o = state.orders.find(x=>x.id===nav.params.orderId);
+  if (!o) return screenEmptyRedirect('catalog');
+  const p = PERSONALITIES.find(x=>x.id===o.personalityId);
+  const stageIdx = {pending:0, recorded:1, delivered:2}[o.status];
+  const labels = ['Objednávka přijata','Natáčí se…','Doručeno'];
+  return `
+    <div class="headline">Stav objednávky</div>
+    <div class="s-label">${p?p.name:''} · ${o.recipientName}</div>
+    <div class="card">
+      ${labels.map((l,i) => `<div class="timeline-step ${i>stageIdx?'dim':''}"><div class="dotstep ${i<stageIdx?'done':i===stageIdx?'active':''}"></div><div class="tl-label">${l}</div></div>`).join('')}
+    </div>
+    ${o.status!=='delivered' ? `<button class="btn ghost" onclick="advanceOrder('${o.id}')">Simulovat další krok</button>` : `<button class="btn primary" onclick="navigateTo('order-delivered',{orderId:'${o.id}'})">Zobrazit doručené video</button>`}
+    <button class="btn ghost" onclick="navigateTo('mine')">Moje přání</button>
+  `;
+}
+function advanceOrder(id) {
+  const o = state.orders.find(x=>x.id===id);
+  if (o.status==='pending') o.status='recorded';
+  else if (o.status==='recorded') o.status='delivered';
+  saveState();
+  render();
+}
+
+function screenOrderDelivered() {
+  const o = state.orders.find(x=>x.id===nav.params.orderId);
+  if (!o) return screenEmptyRedirect('catalog');
+  const p = PERSONALITIES.find(x=>x.id===o.personalityId);
+  return `
+    <div class="thumb" style="height:190px;">▶ přehrávač videa (demo)</div>
+    <div class="headline" style="font-size:17px;">Video od ${p?p.name:''} je tu!</div>
+    <div class="row"><button class="btn ghost" onclick="alert('Demo — stažení není v testovacím režimu dostupné.')">Stáhnout</button><button class="btn ghost" onclick="alert('Demo — sdílení není v testovacím režimu dostupné.')">Sdílet</button></div>
+    <div class="card" style="text-align:center; color:var(--text-dim); font-size:11px;">Díky tobě podpořila ${p?money(p.price):''} projekt ${p?p.project:''}</div>
+    <button class="btn ghost" onclick="navigateTo('mine')">Zpět</button>
+  `;
+}
+
+function screenHall() {
+  const stats = PERSONALITIES.map(function(p) {
+    const orders = state.orders.filter(o=>o.personalityId===p.id && o.status==='delivered');
+    return Object.assign({}, p, { count: orders.length + 3, raised: (orders.length+3)*p.price });
+  });
+  return `
+    ${topRow()}
+    <div class="headline">Síň přání</div>
+    <div class="s-label">osobnosti, které pomáhají</div>
+    <div class="scroll-body" style="display:grid; grid-template-columns:1fr 1fr; gap:9px;">
+      ${stats.map(p => `<div class="thumb" style="height:100px; cursor:pointer;" onclick="navigateTo('hall-detail',{id:'${p.id}'})">${p.name}<br>${p.count} přání</div>`).join('')}
+    </div>
+    ${tabbar('hall')}
+  `;
+}
+function screenHallDetail() {
+  const p = PERSONALITIES.find(x=>x.id===nav.params.id);
+  if (!p) return screenEmptyRedirect('hall');
+  const orders = state.orders.filter(o=>o.personalityId===p.id && o.status==='delivered');
+  const count = orders.length + 3, raised = count*p.price;
+  return `
+    <div class="thumb" style="height:160px;">portrét + motto</div>
+    <div class="headline" style="font-size:17px;">${p.motto}</div>
+    <div class="card" style="color:var(--text-dim);">Podporuje: ${p.project}</div>
+    <div class="row"><span class="tag on">${count} přání</span><span class="tag on">${money(raised)}</span></div>
+    <button class="btn ghost" onclick="navigateTo('hall')">Zpět do Síně</button>
+  `;
+}
+
+function screenCorporate() {
+  const issued = state.vouchers.filter(v=>v.status==='issued').length;
+  const redeemed = state.vouchers.filter(v=>v.status==='redeemed').length;
+  return `
+    <div class="headline">Kampaň partnera</div>
+    <input type="text" value="${state.corporate.condition}" oninput="state.corporate.condition=this.value; saveState();">
+    <button class="btn primary" onclick="generateVouchers()">Vygenerovat 5 voucherů</button>
+    <div class="row"><span class="tag">${state.vouchers.length} vydáno</span><span class="tag on">${redeemed} uplatněno</span></div>
+    <div class="scroll-body">
+      ${state.vouchers.length===0 ? `<div class="empty">Zatím žádné vouchery — vygeneruj první sadu.</div>` : state.vouchers.map(v => `
+        <div class="list-row"><div class="meta"><div class="t" style="font-family:monospace;">${v.code}</div></div><span class="badge ${v.status==='redeemed'?'ok':''}">${v.status==='redeemed'?'uplatněno':'vydáno'}</span></div>
+      `).join('')}
+    </div>
+    <button class="btn ghost" onclick="navigateTo('home')">Zpět na hlavní stránku</button>
+  `;
+}
+function generateVouchers() {
+  for (let i=0;i<5;i++) {
+    state.vouchers.push({ code: 'WISH-' + uid().toUpperCase(), status: 'issued' });
+  }
+  saveState();
+  render();
+}
+
+function screenEmptyRedirect(target) {
+  setTimeout(()=>navigateTo(target), 0);
+  return `<div class="empty">Přesměrovávám…</div>`;
+}
+
+/* ---------- router ---------- */
+const SCREENS = {
+  'home': screenHome, 'occasion': screenOccasion, 'create': screenCreate,
+  'recipient': screenRecipient, 'confirm': screenConfirm, 'recipient-view': screenRecipientView,
+  'mine': screenMine, 'catalog': screenCatalog, 'personality-detail': screenPersonalityDetail,
+  'order-form': screenOrderForm, 'order-status': screenOrderStatus, 'order-delivered': screenOrderDelivered,
+  'hall': screenHall, 'hall-detail': screenHallDetail, 'corporate': screenCorporate,
+};
+
+function render() {
+  const fn = SCREENS[nav.screen] || screenHome;
+  document.getElementById('phone').innerHTML = `<div class="notch"></div>` + fn();
+}
+
+document.getElementById('themeToggle').addEventListener('click', () => {
+  document.body.classList.toggle('light');
+  document.getElementById('themeLabel').textContent = document.body.classList.contains('light') ? 'Světlý' : 'Tmavý';
+});
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (confirm('Smazat všechna testovací data (přání, objednávky, vouchery) v tomto prohlížeči?')) {
+    state = defaultState();
+    saveState();
+    draft = {};
+    navigateTo('home');
+  }
+});
+
+render();
+</script>
+
+</body>
+</html>
