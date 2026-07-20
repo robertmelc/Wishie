@@ -2,8 +2,12 @@
 <html lang="cs">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>Wishie — interaktivní prototyp</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="theme-color" content="#140F26">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -19,7 +23,7 @@
   body { margin:0; background:var(--bg); color:var(--text); font-family:'Manrope',sans-serif; transition:background .25s,color .25s; min-height:100vh; }
   .display { font-family:'Fraunces', Georgia, serif; }
 
-  .topbar { display:flex; align-items:center; justify-content:space-between; padding:16px 26px; border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--bg); z-index:20; }
+  .topbar { display:flex; align-items:center; justify-content:space-between; padding:16px 26px; border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--bg); z-index:20; flex-wrap:wrap; gap:8px; }
   .topbar .brand { display:flex; align-items:center; gap:9px; font-family:'Fraunces',serif; font-weight:600; font-size:18px; }
   .topbar .brand svg { width:26px; height:26px; }
   .topbar .right { display:flex; align-items:center; gap:12px; }
@@ -114,8 +118,15 @@
 
   @media (max-width: 860px) {
     aside.sidebar { display:none; }
-    .phone { width:300px; height:620px; }
+    .phone { width:100%; max-width:340px; height:auto; min-height:600px; }
     .langsel button { padding:6px 7px; font-size:10.5px; }
+  }
+  @media (max-width: 640px) {
+    .topbar { padding:12px 14px; }
+    .topbar .brand { font-size:16px; }
+    .topbar .right { gap:6px; }
+    main.viewer { padding:26px 12px 80px; }
+    .viewer-head h2 { font-size:21px; }
   }
 </style>
 </head>
